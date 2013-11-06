@@ -44,6 +44,14 @@
   cat("END IONS\n\n",file=fcon,sep="")
 }
 
+writeSpecList = function(fcon, filename, parpeak, peaklists )
+{
+  for(i in 1:length(peaklists))
+  {
+    .writeMGF(fcon,filename,parpeak,peaklists[[i]],specid = i)
+  }
+}
+
 ## generate Pseudospectrum given ms1 peaks
 .generatePseudospec=function(
   dbcon,
@@ -173,9 +181,7 @@ pseudospecMS2ExtractWindow = function(
 
 
 ###
-### test
-###
-generatePseudopsec = function( res , thrsm = 2 , thrlar = 4 )
+generatePseudopsec = function( res , thrsm = 2 , thrlar = 4, minlength=5 )
 {
   result = list()
   count = 1
@@ -196,7 +202,6 @@ generatePseudopsec = function( res , thrsm = 2 , thrlar = 4 )
       fp = rbind(fp, fp1 )
       ## remove from dataset
       res = res[-idxclose,]
-      
     }
     rtmin = rt - thrlar
     rtmax = rt + thrlar
@@ -206,8 +211,57 @@ generatePseudopsec = function( res , thrsm = 2 , thrlar = 4 )
       fpfar = res[idxfar,]
       fp = rbind(fp,fpfar)
     }
-    result[[count]]=fp
-    count = count + 1
+    if(dim(fp)[1]>minlength){
+      result[[count]]=fp
+      count = count + 1
+    }
   }
   return(result)  
+}
+
+pseudospecMS2 = function(
+  fname,  
+  outdir,
+  rtext=5,
+  mzext=4,
+  ms2vol = 200,
+  errorRT = 2.5,
+  rtrange = NULL,
+  minlength=5
+){
+  con = createConnection( fname )
+  addIndexRT2Features( con )
+  ## confine search to best features
+  ## select features from ms1 map and attempt deisotoping
+  maps <- mapSummary(con)
+  maps <- maps[maps[,"mslevel"]==2,]
+  maps <- maps[order(maps[,"minMZsw"]),]
+  maps <- maps[,c("minMZsw","maxMZsw","id")] #make sure it is ordered the same way
+  
+  fstem=sub("_0.sqlite$","",fname)
+  fbase=basename(fstem)
+  fbase=paste(fbase,"_erRT",errorRT,"_rtext",rtext,".mgf",sep="")
+  fout=file.path(outdir,fbase)
+  cat("outfile : ",fout,"\n")
+  cat("fbase : " , fbase , "\n")
+  filecon = file(fout,"w+")
+  
+  generSummary <-list(found=0,notfound=0,length=NULL)
+  for(i in 1:dim(maps)[1])
+  {
+    x <- unlist( maps[i,c("id","minMZsw","maxMZsw")])
+    ## TODO ADD DEISOTOPING
+    createBestFeaturesView( con , rtext , mzext , ms2vol )
+    res <- getMZRTVol( con , x["id"] , rtrange = rtrange )
+    if(dim(res)[1]>0)
+    {
+      spec = generatePseudopsec(res,thrsm=errorRT, thrlar=2*errorRT)
+    }
+  }
+  close(filecon)
+  tryCatch(
+    dbClearResult(dbListResults(con)[[1]]), finally=print("no db result to clear")
+  )
+  #dbDisconnect(con)
+  return(generSummary)
 }
