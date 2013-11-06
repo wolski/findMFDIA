@@ -17,5 +17,7 @@ yeast
 *.mgf
 .RData
 *.dvi
-
 .Rproj.user
+.Rbuildignore
+findMFDIA.Rproj
+

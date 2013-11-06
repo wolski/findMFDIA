@@ -27,8 +27,6 @@
   return(coord)
 }
 
-
-
 ## write mgf files
 .writeMGF = function(fcon,filename,parpeak,peaks,specid=1){
   parpeak<-parpeak
@@ -54,7 +52,7 @@
   peaks,
   errorRT=1.5, # error of RT in [s]
   minlength = 5
-  )
+)
 {
   generSummary <-list(found=0,notfound=0,length=NULL)
   for(i in 1:dim(peaks)[1])
@@ -73,13 +71,12 @@
   return(generSummary)
 }
 
-#
 # facade function
 # fname - file to read
 # outdir - directory to write to - filename will be assempled.
 # TODO separate MS1 selection function:
 
-getMS1seeds = function( fname , rtext=3 , mzext=3 , ms1vol = 500, rtrange=NULL )
+getMS1seeds = function( con , rtext=3 , mzext=3 , ms1vol = 500, rtrange=NULL )
 {
   ### Confine search to best features
   createBestFeaturesView(con,rtext,mzext,ms1vol)
@@ -111,43 +108,9 @@ generatePseudospecMS1 = function(fname , coordinates , outdir,  rtext=5 , mzext=
   )
   return(list(filename=fbase,summ=summ))
 }
-
-###
-
-
-generatePseudospecFromMS1 = function(fname , outdir, rtext=5 , mzext=4 ,
-                                     ms1vol = 8000, ms2vol = 500, errorRT = 2.5)
-{
-  con=createConnection(fname)
-  addIndexRT2Features(con)
-  
-  ## confine search to best features
-  createBestFeaturesView(con,rtext,mzext,ms1vol)
-  ms1id <- getMS1id(con)
-  mzrange <- swathMS1Coverage(con)
-  
-  res <- getMZRTVol(con,ms1id,mzrange=mzrange)
-  ## change view (relax for ms2 selection)
-  createBestFeaturesView(con,rtext,mzext,ms2vol)
-  ## generate pseudospectra and write to mgf file.
-  
-  fstem=sub("_0.sqlite$","",fname)
-  fbase=basename(fstem)
-  fbase=paste(fbase,"_erRT",errorRT,"_rtext",rtext,".mgf",sep="")
-  
-  fout=file.path(outdir,fbase)
-  print(fout)
-  print(fbase)
-  filecon = file(fout,"w+")
-  summ <- .generatePseudospec(con,filecon,fbase,res,errorRT=errorRT)
-  close(filecon)
-  tryCatch(
-    dbClearResult(dbListResults(con)[[1]]), finally=print("no db result to clear")
-  )
-  return(list(filename=fbase,summ=summ))
-}
-
-
+##
+##
+##
 
 
 
@@ -157,15 +120,19 @@ generatePseudospecFromMS1 = function(fname , outdir, rtext=5 , mzext=4 ,
 # starts to creating pseudospectra
 #
 pseudospecMS2ExtractWindow = function(
-  fname , 
-  rtext=5 , mzext=4 , ms2vol = 500, ##parameters for view creation.
-  errorRT = 2.5
-)
-{
+  fname,  
+  outdir,
+  rtext=5,
+  mzext=4,
+  ms2volup = 1000, ##parameters for view creation.
+  ms2vollow = 200,
+  errorRT = 2.5,
+  rtrange = NULL,
+  minlength=5
+){
   con=createConnection(fname)
   addIndexRT2Features(con)
   ## confine search to best features
-  createBestFeaturesView(con,rtext,mzext,ms2vol)
   ## select features from ms1 map and attempt deisotoping
   maps <- mapSummary(con)
   maps <- maps[maps[,"mslevel"]==2,]
@@ -173,23 +140,28 @@ pseudospecMS2ExtractWindow = function(
   maps <- maps[,c("minMZsw","maxMZsw","id")] #make sure it is ordered the same way
   
   fstem=sub("_0.sqlite$","",fname)
-  fout=paste(fstem,"_erRT",errorRT,"_rtext",rtext,"_MS2Extract.mgf",sep="")
-  print(fout)
+  fbase=basename(fstem)
+  fbase=paste(fbase,"_erRT",errorRT,"_rtext",rtext,".mgf",sep="")
+  fout=file.path(outdir,fbase)
+  cat("outfile : ",fout,"\n")
+  cat("fbase : " , fbase , "\n")
   filecon = file(fout,"w+")
   
-  generSummary <-list(found=0,notfound=0)
-  
+  generSummary <-list(found=0,notfound=0,length=NULL)
   for(i in 1:dim(maps)[1])
   {
     x <- unlist( maps[i,c("id","minMZsw","maxMZsw")])
-    res <- getMZRTVol( con , x["id"] , mzrange = x[2:3] )
+    ## TODO ADD DEISOTOPING
+    createBestFeaturesView(con,rtext,mzext,ms2volup)
+    res <- getMZRTVol( con , x["id"] , mzrange = x[2:3] , rtrange = rtrange)
     if(dim(res)[1]>0)
     {
-      summ <- .generatePseudospec(con,filecon,res,errorRT=errorRT)
+      createBestFeaturesView(con,rtext,mzext,ms2vollow)
+      summ <- .generatePseudospec(con, filecon, filename, res, errorRT=errorRT, minlength=minlength )
       generSummary$found = generSummary$found + summ$found
       generSummary$notfound = generSummary$notfound + summ$notfound
+      generSummary$length = c(generSummary$length, summ$length)
     }
-    
   }
   close(filecon)
   tryCatch(
@@ -197,4 +169,45 @@ pseudospecMS2ExtractWindow = function(
   )
   #dbDisconnect(con)
   return(generSummary)
+}
+
+
+###
+### test
+###
+generatePseudopsec = function( res , thrsm = 2 , thrlar = 4 )
+{
+  result = list()
+  count = 1
+  while( dim(res)[1] > 0 )
+  {
+    idxh=which(res$Volume == max(res$Volume))
+    idx <- idxh[1]
+    highest <- res[idx,] # 
+    rt = highest$RT
+    fp = highest
+    res <- res[-idx,] # remove column 
+    
+    rtmin = rt - thrsm
+    rtmax = rt + thrsm
+    idxclose  = which( res$RT > rtmin & res$RT <  rtmax) 
+    if(length(idxclose) > 0){
+      fp1 = res[idxclose,] 
+      fp = rbind(fp, fp1 )
+      ## remove from dataset
+      res = res[-idxclose,]
+      
+    }
+    rtmin = rt - thrlar
+    rtmax = rt + thrlar
+    #cat("rtmin", length(rtmin),"rtmax", length(rtmax),"\n")
+    idxfar = which(res$RT> rtmin & res$RT <  rtmax) 
+    if(length(idxfar)>0){
+      fpfar = res[idxfar,]
+      fp = rbind(fp,fpfar)
+    }
+    result[[count]]=fp
+    count = count + 1
+  }
+  return(result)  
 }
