@@ -3,7 +3,22 @@
 \begin{document}
 \SweaveOpts{concordance=TRUE}
 
+<<>>=
 
+library(findMFDIA)
+con = createConnection("/home/witold/Analysis/Peter/data/peterb_L130819_004_SW_0.sqlite")
+mapSummary(con)
+createBestFeaturesView(con,rtext=3,mzext=3,Volume=100)
+allFeatures3 = getFeaturesFlex(con,5)                         
+par(mar=c(5,5,1,1))
+plot(allFeatures3$RT,allFeatures3$MZ,pch=".",cex=log(allFeatures3$Volume)/3 )
+
+createBestFeaturesView(con,rtext=3,mzext=3,Volume=3000)
+allFeatures3 = getFeaturesFlex(con,5)                         
+
+points(allFeatures3$RT,allFeatures3$MZ,pch=".",cex=log(allFeatures3$Volume)/3 ,col=3)
+
+@
 
 
 
