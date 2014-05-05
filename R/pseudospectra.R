@@ -14,7 +14,6 @@
   coord <- getMZRTVol(con,idswath,rtrange=c(rtmin,rtmax),features=features)
   return(coord)
 }
-
 ## Write mgf files
 .writeMGF = function(fcon,filename,parpeak,peaks,specid=1){
   parpeak = parpeak
@@ -33,7 +32,6 @@
   }
   cat("END IONS\n\n",file=fcon,sep="")
 }
-
 ## generate Pseudospectrum given ms1 peaks
 .generatePseudospec = function(
   dbcon ,
@@ -61,8 +59,11 @@
   }
   return(generSummary)
 }
-
-## use this function to retrieve ms1 features
+#' use this function to retrieve ms1 features
+#' @param rtext - min nr of pixels of feature in RT
+#' @param mzext - min nr of pixels of feature in MZ
+#' @param ms1vol - min volume of feature
+#' @export
 getMS1seeds = function( con , rtext=3 , mzext=3 , ms1vol = 500, rtrange=NULL )
 {
   ### Confine search to best features
@@ -72,8 +73,6 @@ getMS1seeds = function( con , rtext=3 , mzext=3 , ms1vol = 500, rtrange=NULL )
   res <- getMZRTVol( con , ms1id , mzrange = mzrange , rtrange = rtrange)
   return( res )
 }
-
-
 #' Generate pseudospectra using MS1 seeds
 #'
 #' @param  coordinates dataframe with peaks to use to generate pseudospectra from
@@ -85,6 +84,7 @@ getMS1seeds = function( con , rtext=3 , mzext=3 , ms1vol = 500, rtrange=NULL )
 #' @param errorRT retention time error 
 #' @param minlength minimum peaklist length
 #' 
+#' @export
 generatePseudospecMS1 = function(fname ,
                                  coordinates , 
                                  outdir ,
@@ -114,9 +114,6 @@ generatePseudospecMS1 = function(fname ,
   )
   return( list(filename=fbase,summ=summ) )
 }
-##
-##
-##
 
 
 

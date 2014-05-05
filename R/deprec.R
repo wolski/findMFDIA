@@ -1,4 +1,3 @@
-#
 # generate Pseudospectra from extraction windows in ms2 ( using mass available there ) 
 # iterates over all maps, selects all features in extraction window
 # starts to creating pseudospectra

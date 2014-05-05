@@ -1,8 +1,6 @@
 #
 # functions for retention time aligment of swath data.
 #
-
-
 ## function for creating the bins in mz and rt
 ## returns a list
 .prepareBins <- function(con,mzbinw=1,rtbinw=3){
@@ -22,7 +20,6 @@
 
     return(list( breaksrt=breaksrt , midsrt=midsrt  , breaksmz=breaksmz ,  midsmz=midsmz ))
 }
-
 ##
 ##
 .createMapImage <- function( con , idswath , bandm, rtshift=FALSE )
@@ -48,7 +45,6 @@
     colnames(tmp) <- bandm$midsmz
     return(tmp)
 }
-
 ## colnames are the masses, rownames are rts
 .prepare2Compare <- function(img){
     img[is.na(img)] <- 0
@@ -56,7 +52,6 @@
     imgtr <- t(imgtr)
     return(imgtr)
 }
-
 ##ensure that vector has more than minelems
 .dropShortVecs <- function(imgtr,MARGIN=1,minelems=10){
    imgtr <- apply(imgtr,MARGIN,function( x )
@@ -70,13 +65,12 @@
        )
     return(t(imgtr))
 }
-
-
 .vnormRows <- function(imgtr,MARGIN=1){
     imgtr <- apply(imgtr,MARGIN,function(x){ v <- sqrt( sum(x*x) ) ;if(v>0){x <- x / v};return(x) })
     return(t(imgtr))
 }
-
+#' create map image
+#' @export
 createMapImage <- function(con,idswaths,mzbinw=0.9,rtbinw=3,
                            minelems=30,rtshift=FALSE){
     bandm <- .prepareBins(con,mzbinw,rtbinw)
@@ -90,9 +84,8 @@ createMapImage <- function(con,idswaths,mzbinw=0.9,rtbinw=3,
     img <- .vnormRows(img)
     return(img)
 }
-
-
-## img1, img2 , threshold of dotprod
+#' img1, img2 , threshold of dotprod
+#' @export
 getMatches <- function(img1,img2,threshold=0.5){
     library(Matrix)
     iMgtr1 <- Matrix(img1)
@@ -104,9 +97,8 @@ getMatches <- function(img1,img2,threshold=0.5){
     y <- as.numeric(rownames(img1))[idx[,2]]
     return(list( x=x , y=y , V=V , X=X))
 }
-
-
-# xyV = result of getMatches
+#' xyV = result of getMatches
+#' @export
 computeAlignment <- function(xyV, rtdevmax = 180, k.runmed = 19,f.lowess=0.05){
     x <- NULL
     y <- NULL
@@ -142,7 +134,8 @@ computeAlignment <- function(xyV, rtdevmax = 180, k.runmed = 19,f.lowess=0.05){
            )
     
 }
-
+#' visualize aligment
+#' @export
 visAlignmentMatrix <- function(xyV,range=NULL )
 {
     smoothGauss <- function(x,width=5){g <- dnorm(-20:20,0,width); x <- filter(x,g,circular=TRUE);return(x)}

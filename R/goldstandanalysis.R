@@ -1,11 +1,3 @@
-##author: Witold Wolski wewolski@gmail.com
-
-###
-### This file contains function to analyse peptide transitions from the gold standard dataset 
-###
-
-#########################methods for computing ratios in dilution series####
-
 .computePairRatio <- function(tr1x,tr2x){
     nam <- c(tr1x$pepseq,tr1x$dataID , tr2x$dataID)
     dil <- c(tr1x$dataDilution, tr2x$dataDilution )
@@ -16,10 +8,7 @@
     tmp <- c(dil, rarea, rcarea, mrt, mback)
     return(list(nam=nam,nr=tmp))
 }# end compute pairs
-
-##
 ## dilution of tr1 > tr2
-##
 .allpossibleratiosFor2Dilutions <- function(tr1,tr2){
     nam <- NULL
     nr <- NULL
@@ -38,7 +27,6 @@
         }
     return (list(nam=nam, nr=nr))
 }
-
 .ratiosforTransition=function(trw){
     x<-sort(unique(trw$dataDilution),decreasing=TRUE)
     nam <- NULL
@@ -57,12 +45,12 @@
         }
     return(list(nam=nam,nr=nr))
 }
-
-
-##
-## extract features from a map
-##
-extractfetures = function(notna, con , mzerror = 0.03, rterror=10)
+#' extract features from database
+#' @param notna matrix with target data
+#' @param con connection
+#' @export
+#' 
+extractfeatures = function(notna, con , mzerror = 0.03, rterror=10)
 {
   allfeat <- NULL
   for(i in 1:dim(notna)[1]){
@@ -86,11 +74,8 @@ extractfetures = function(notna, con , mzerror = 0.03, rterror=10)
   }
   return(allfeat)
 }
-
-
-##
-##
-##
+#' ratios of transitions
+#' @export
 ratiosOfTransitionList=function(tr){
     pepseq <- (unique(tr$pepseq))
     res <- vector(length(pepseq),mode="list")
@@ -115,15 +100,12 @@ ratiosOfTransitionList=function(tr){
                        "area1","area2","carea1","carea2","rt1","rt2","back1","mback2")
     return(res)
 }
-
-
-###
-### do some data preparation
-###
+#' do data preparation
+#' @export
 prepareData <- function(tmp){
-    replic<-tmp$ReplicateName
+    replicA <- tmp$ReplicateName
     
-    replic <- strsplit(as.character(replic),"_")
+    replic <- strsplit(as.character(replicA),"_")
     namDil <- c(unlist(replic))
     dsID <- namDil[ seq(2, length(namDil), 4) ]
     dsDil <- as.numeric(namDil[ seq(3, length(namDil), 4) ])
@@ -131,7 +113,7 @@ prepareData <- function(tmp){
     
     iddil <- data.frame(dataID=dsID,dataDilution=dsDil,stringsAsFactors=FALSE)
     golds <- data.frame(iddil,tmp,stringsAsFactors=FALSE)
-    golds <- golds[,-5]
+    #golds <- golds[,-5]
     
     indic <- (golds$RetentionTime=="#N/A")
     golds[indic,c(10:13)] <- as.numeric(NA)
@@ -142,11 +124,8 @@ prepareData <- function(tmp){
 
     return(golds)
 }
-
-
 ###############################
 ###############################
-
 .getNewID <- function(x){
     pepse <- as.character(x[1])
     dataid <- as.character(as.numeric(x[2]))
@@ -154,7 +133,6 @@ prepareData <- function(tmp){
     newid <- paste(pepse,dataid,datadilution,sep="_")
     return(newid)
 }
-
 .getKeys <- function(x){
     pepse <- as.character(x[1])
     dataid <- as.character(as.numeric(x[2]))
@@ -162,8 +140,6 @@ prepareData <- function(tmp){
     newid <- c(pepse,dataid,datadilution)
     return(newid)
 }
-
-
 ### compute transition stats for gold standard
 .computeTransStat <- function(tran){
     tran <- data.frame(tran,stringsAsFactors=FALSE)
@@ -173,9 +149,9 @@ prepareData <- function(tmp){
     back <- sum(tran$Background,na.rm=TRUE)
     return(c( area=area , carea=areac , rt=rt , back=back ))
 }
-###
-### compute summaries for parents from transitions
-###
+#' compute summaries for parents from transitions
+#'
+#' @export
 computeTransitionStats <- function(golds)
 {
     newid <- apply(golds,1,.getNewID)

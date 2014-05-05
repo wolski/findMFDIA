@@ -1,9 +1,5 @@
-##author : Witold Wolski wewolski@gmail.com
-
-## functions for transition group finding.
-
-### Peak group finding scoring and quantification:
-## Extract features given transition group
+# Peak group finding scoring and quantification:
+# Extract features given transition group
 .getFeatures <- function( precursor , con , mzerror=0.1, rterror=NULL )
 {
     parmass=precursor$mz
@@ -34,10 +30,9 @@
         }
     return( list(parents= parents ,products= products) )
 }
-
-## 
-## group features according RT
-##
+# group features according RT
+#
+#
 .groupFeatures<-function(product,parent,rterror=1.5,minsize=2)
 {
     ## order products by mass
@@ -70,10 +65,6 @@
         }
     return(groups)
 }
-
-##
-## 
-##
 .matchPeaks <- function(xmass,ymass,error=0.05){
     res <- NULL
     for(i in 1:length(xmass)){
@@ -85,8 +76,8 @@
     }
     return(res)
 }
-
-### do scoring ###
+#' do scoring
+#' @export
 scoreGroup <- function(trans,group){
     parent <- group$parent
     product <- group$prod
@@ -108,7 +99,6 @@ scoreGroup <- function(trans,group){
     idx <- .matchPeaks(product$MZ, trans$product[,"mz"])
     spearman <- cor( product$Volume[ idx[,1] ] ,  trans$product[,"intensity"][ idx[,2] ],method="spearman" )
 
-    
     res <- c(transname=trans$name,
              sequence=trans$sequence,
              rt=trans$rt,
@@ -126,8 +116,8 @@ scoreGroup <- function(trans,group){
              )
     return(res)
 }
-
-## irt calibration ##
+#' irt calibration
+#' @export
 findTransitionsForIRT <- function(irttrans2
                                   ,con
                                   ,mzerror=0.03# for feature extraction
@@ -150,14 +140,11 @@ findTransitionsForIRT <- function(irttrans2
                     irts <- rbind(irts,c(j,time)) # get experimental retention time
                 }
         }
-
     reft <- unlist( lapply( irttrans2 , function(x){ return(x$rt) } ) )
     return(list(refrt=reft,irts=irts))
 }
-
-
-
-## find reference irTS
+#' find reference irTS
+#' @export
 calibrateRTTransitions <- function(con, irttrans2, alltrans ,
                                    mzerror=0.03 ,
                                    rterror=2.5
@@ -177,7 +164,8 @@ calibrateRTTransitions <- function(con, irttrans2, alltrans ,
     }
     return(NULL)
 }
-
+#' find irt transitions and compute a robust linear model
+#' @export
 getIRTcalibrationmodel <- function (con, 
                                     irttrans2, 
                                     mzerror = 0.03,
@@ -197,10 +185,9 @@ getIRTcalibrationmodel <- function (con,
   }
   return(NULL)
 }
-
-
-
-##
+#' find transitions
+#'
+#' @export
 findTransitions <-  function(newtrans,con
                              ,mzerror=0.03# for feature extraction
                              ,extRTerr=90
@@ -244,11 +231,10 @@ findTransitions <-  function(newtrans,con
         return( list(score=score, groups=groups) )
     }
     return(NULL)
-}#end findFeatures
-
-
-#
-#
+}
+#' visualize transitions
+#' @param con - database connection
+#' @export
 visTransitions <- function(con,groups,main="",sleep=1){
     if(length(groups)>0){
         for(i in 1:length(groups)){
@@ -257,11 +243,7 @@ visTransitions <- function(con,groups,main="",sleep=1){
         }
     }
 }
-
-##
-##export help
-##
-
+#' This can't work
 toSimpleFormat <- function(sc){
     len <- dim(sc)[1]
     tmp <- data.frame(dataID=rep(dataset,len),

@@ -4,7 +4,6 @@
 \SweaveOpts{concordance=TRUE}
 
 <<>>=
-
 library(findMFDIA)
 con = createConnection("/home/witold/Analysis/Peter/data/peterb_L130819_004_SW_0.sqlite")
 mapSummary(con)
@@ -20,6 +19,39 @@ points(allFeatures3$RT,allFeatures3$MZ,pch=".",cex=log(allFeatures3$Volume)/3 ,c
 
 @
 
+
+\section{loading the gold standard data.}
+
+<<>>=
+tmp = read.csv( "/home/witold/Dropbox/Goldstandard/AQUAGold/AQUA4_Human_picked_napedro2.csv", header=TRUE, stringsAsFactors=FALSE )
+library(findMFDIA)
+prepdata = prepareData(tmp)
+dim(prepdata)
+head(prepdata)
+
+transitionstats = computeTransitionStats(xx)
+dim(transitionstats)
+head(transitionstats)
+ratios = ratiosOfTransitionList(transtionstats)
+dim(ratios)
+head(ratios)
+
+@
+
+<<>>=
+idx = ratios$dil1- ratios$dil2
+hist(idx)
+
+par(mfrow=c(2,3))
+for(i in 1:6){
+  rat1 = ratios[idx == i,]
+  dim(rat1)
+  hist(log2(rat1$area1/rat1$area2), breaks = 100)
+  abline(v = i,col=2)
+}
+
+
+@
 
 
 \end{document}

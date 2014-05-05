@@ -1,17 +1,18 @@
 ## author : Witold Wolski wewolski@gmail.com
 ## reading transition csv
 ## handling transitions
-
 .getTransitionsCSV <- function(filename){
   return(read.table(filename,sep="\t",header=T))
 }
 
+#' creates product object
+#' @export
 createProduct = function(name, mz, intensity, annotation){
     tmp <- cbind(name,mz,intensity,annotation)
     class(tmp)="products"
     return(tmp)
 }
-
+#' creates transition precursor object
 createTransition <- function(name, mz, rt, sequence, proteinname, charge, decoy,products){
     transition <- list(
         name=name,
@@ -24,14 +25,6 @@ createTransition <- function(name, mz, rt, sequence, proteinname, charge, decoy,
     class(transition)<-"precursor"
     return(transition)
 }
-
-getTransitions <- function(filename){
-    dfcsv <- .getTransitionsCSV(filename)
-    res<-.dataframe2transitions(dfcsv)
-    res <- sortTransitionsbyRT(res)
-    return(res)
-}
-    
 
 ##sort transitions by RT
 sortTransitionsbyRT <- function(trans){
@@ -107,7 +100,14 @@ for( i in 1:length(trans) )
     return(res)
     
 }
-
+#' get transtions from database
+#' @export
+getTransitions <- function(filename){
+  dfcsv <- .getTransitionsCSV(filename)
+  res<-.dataframe2transitions(dfcsv)
+  res <- sortTransitionsbyRT(res)
+  return(res)
+}
 #todo expand also the products
 as.data.frame.transitionlist = function(precursor){
     res <- matrix(0, nrow=length(precursor),ncol=5)

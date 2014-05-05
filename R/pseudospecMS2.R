@@ -1,7 +1,6 @@
 ###
 ### functions to generate pseudospectra from MS2 maps only without precursor information.
 ###
-
 ## write mgf files ##
 .writeMGFSwath = function(fcon,filename,parpeak,peaks,specid=1){
   parpeak<-parpeak
@@ -18,9 +17,8 @@
   }
   cat("END IONS\n\n",file=fcon,sep="")
 }
-
-### stern ...
-writeSpecList = function( fcon , filename , parmz , peaklists )
+###  ...
+.writeSpecList = function( fcon , filename , parmz , peaklists )
 {
   if(length(peaklists)<1)
   {
@@ -43,17 +41,13 @@ writeSpecList = function( fcon , filename , parmz , peaklists )
     .writeMGFSwath(fcon,filename,unlist(parpeak),pl,specid = i)
   }
 }
-
-#'
-#' Generate pseudospec from map...
+#' Generate pseudospec from map
 #'
 #' @param res a data frame, must contain columns Volume and RT 
 #' @param thrsm lower rt threshold
 #' @param thrlar upper rt threshold
 #' @param minlength minimum spectrum length
 #' @return list of spectra 
-#' 
-#' 
 generatePseudopsec = function( res , thrsm = 2 , thrlar = 4, minlength=5 )
 {
   result = list()
@@ -91,7 +85,9 @@ generatePseudopsec = function( res , thrsm = 2 , thrlar = 4, minlength=5 )
   }
   return(result)  
 }
-
+#' generate ms2 pseudospectra
+#' 
+#' @export
 pseudospecMS2 = function(
   fname,  
   outdir,

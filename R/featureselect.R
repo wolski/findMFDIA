@@ -1,11 +1,6 @@
-## author : Witold Wolski wewolski@gmail.com
-
-##
-## This files contains functions for RT peak similarity scoring.
-##
-
-
-###making KURTOSIS less volume dependent and scaling
+#' making KURTOSIS less volume dependent and scaling
+#' 
+#' @export
 transformKURT <- function(yk,volume)
     {
         yk <- yk-min(yk)+1
@@ -13,15 +8,15 @@ transformKURT <- function(yk,volume)
         yk2 <- scale(yk2)
         return(yk2)
     }
-
+#' making SD less volume dependent
+#'
+#' @export
 transformSD <- function(sdk,rtext,volume)
     {
         res <- (sdk/rtext)*(log(volume)+5)
         return(res)
     }
-
-
-computeScore4Group=function(group, transition)
+.computeScore4Group=function(group, transition)
 {
     parent <- group$parent
     prod <- group$prod
